@@ -69,7 +69,7 @@ char DirectAccess(char reg_id, char adress)
 
     }
 
-    word = adress % block_size;
+    word = (adress - 1) % block_size;
 
     r[reg_id] = cache_memory[adress_cache].content[word];
 
@@ -79,7 +79,7 @@ char DirectAccess(char reg_id, char adress)
 
 char AssociativityAccess(char reg_id, char adress)
 {
-    int word = adress % block_size;
+    int word = (adress - 1) % block_size;
     block_num = GetBlockNumber(adress);
     int wasHit = 0;
     int gotIn = 0;
@@ -89,7 +89,7 @@ char AssociativityAccess(char reg_id, char adress)
     {
         if(cache_memory[cacheLine].status == 1 && cache_memory[cacheLine].tag == block_num)    //verifica se está utilizada e o tag bate com o block_num
         {
-            printf("HIT\n");
+            //printf("HIT\n");
             cacheHit++;
             wasHit = 1;
             r[reg_id] = cache_memory[cacheLine].content[word];
@@ -99,7 +99,7 @@ char AssociativityAccess(char reg_id, char adress)
 
     if(!wasHit)                                                                                 //se houve miss
     {
-        printf("MISS\n");
+        //printf("MISS\n");
         cacheMiss++;
         for(int cacheLine = 0; cacheLine < size_cache; ++cacheLine)                           //procura primeira linha vazia
         {
@@ -140,7 +140,7 @@ char AssociativityAccess(char reg_id, char adress)
 
 char setAssociativityAccess(char reg_id, char adress, int associativity)
 {
-    int word = adress % block_size;
+    int word = (adress - 1) % block_size;
     block_num = GetBlockNumber(adress);
     int wasHit = 0;
     int gotIn = 0;
@@ -151,7 +151,7 @@ char setAssociativityAccess(char reg_id, char adress, int associativity)
     {
         if(cacheset_memory[cacheset_address].lines[cacheLine].status == 1 && cacheset_memory[cacheset_address].lines[cacheLine].tag == block_num)    //verifica se está utilizada e o tag bate com o block_num
         {
-            printf("HIT\n");
+            //printf("HIT\n");
             cacheHit++;
             wasHit = 1;
             r[reg_id] = cacheset_memory[cacheset_address].lines[cacheLine].content[word];
@@ -161,7 +161,7 @@ char setAssociativityAccess(char reg_id, char adress, int associativity)
 
     if(!wasHit)                                                                                 //se houve miss
     {
-        printf("MISS\n");
+        //printf("MISS\n");
         cacheMiss++;
         for(int cacheLine = 0; cacheLine < associativity; ++cacheLine)                           //procura primeira linha vazia
         {
@@ -360,7 +360,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                 block_num = GetBlockNumber(adress);             //Recebe o número do bloco
                 adress_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
                 first_position = block_num * block_size;        //Posição do primeiro elemento do bloco na memória principal
-                word = adress % block_size;
+                word = (adress - 1) % block_size;
 
                 cache_memory[adress_cache].status = 1;
                 cache_memory[adress_cache].tag = block_num;
@@ -377,7 +377,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             }
             else if(associativity == 1)
             {
-                int word = adress % block_size;
+                int word = (adress - 1) % block_size;
                 block_num = GetBlockNumber(adress);
                 int wasHit = 0;
                 int gotIn = 0;
@@ -396,7 +396,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                 }
             
                 if(!wasHit)                                                                                 //se houve miss
-                {                    
+                {
                     for(int cacheLine = 0; cacheLine < size_cache; ++cacheLine)                           //procura primeira linha vazia
                     {
                         if(cache_memory[cacheLine].status == 0)                                            //na primeira vazia que encontrar
@@ -438,7 +438,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             }
             else if(associativity >= 2)
             {
-                int word = adress % block_size;
+                int word = (adress - 1) % block_size;
                 block_num = GetBlockNumber(adress);
                 int wasHit = 0;
                 int gotIn = 0;
