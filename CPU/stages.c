@@ -65,7 +65,7 @@ char DirectAccess(char reg_id, char adress)
 
     }
 
-    word = adress % block_size;
+    word = (adress-1) % block_size;
 
     r[reg_id] = cache_memory[adress_cache].content[word];
 
@@ -234,7 +234,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                 block_num = GetBlockNumber(adress);             //Recebe o número do bloco
                 adress_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
                 first_position = block_num * block_size;        //Posição do primeiro elemento do bloco na memória principal
-                word = adress % block_size;
+                word = (adress-1) % block_size;
 
                 cache_memory[adress_cache].status = 1;
                 cache_memory[adress_cache].tag = block_num;
@@ -433,7 +433,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
         case 20:
             //int reg_id = current_command.instruction_part[1][1] - 48;
-            printf("%s\n", current_command.instruction_part[1]);
+            printf("%s", current_command.instruction_part[1]);
             return 'F';
 
         case 21:

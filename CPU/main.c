@@ -38,7 +38,7 @@ int main(void)
     printf("Nível de Associatividade: ");
     scanf("%d", &associativity);
 
-    fp = fopen("memory/teste_cache.txt", "r");
+    fp = fopen("memory/matriz_inversa.txt", "r");
     fpMemory = fopen("memory.txt", "r");
     if ((fp == NULL) || (fpMemory == NULL))
     {
