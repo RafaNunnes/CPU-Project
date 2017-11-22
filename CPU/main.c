@@ -42,9 +42,9 @@ int main(void)
     {
         cacheset_memory = (struct cacheSet*) malloc(size_cache * sizeof(struct cacheSet));              //seta os sets(tamanho da cache)
 
-        for(int i = 0; i < associativity; ++i)
+        for(int i = 0; i < size_cache; ++i)
         {
-            cacheset_memory[i].lines = (struct cacheline*) malloc(associativity * sizeof(struct cacheLine));  //seta as linhas de cada set(associativiadde)
+            cacheset_memory[i].lines = (struct cacheLine*) malloc(associativity * sizeof(struct cacheLine));  //seta as linhas de cada set(associativiadde)
         }
         for(int j = 0; j < size_cache; ++j)
         {
@@ -55,7 +55,7 @@ int main(void)
         }
     }
 
-    fp = fopen("memory/matriz.txt", "r");
+    fp = fopen("memory/matriz_inversa.txt", "r");
 
     fpMemory = fopen("memory.txt", "r");
     if ((fp == NULL) || (fpMemory == NULL))

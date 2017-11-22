@@ -7,7 +7,7 @@ int r[10];
 const int total_blocks = 20;
 
 //endereço da memória cache
-char adress_cache;
+char address_cache;
 char cacheset_address;
 
 //flags
@@ -22,65 +22,65 @@ char flag_z,     //zero
 //resto
 int resto;    
 
-char GetBlockNumber(char adress)        //retorna o numero do bloco que o endereço faz parte
+char GetBlockNumber(char address)        //retorna o numero do bloco que o endereço faz parte
 {
-    return (adress-1)/block_size;  
+    return (address-1)/block_size;  
 }
 
-char DirectAccess(char reg_id, char adress)
+char DirectAccess(char reg_id, char address)
 {
     int word;
-    block_num = GetBlockNumber(adress);             //Recebe o número do bloco
-    adress_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
+    block_num = GetBlockNumber(address);             //Recebe o número do bloco
+    address_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
     int first_position = block_num * block_size;    //Posição do primeiro elemento do bloco na memória principal
 
-    if(cache_memory[adress_cache].status == 1)
+    if(cache_memory[address_cache].status == 1)
     {
-        if(cache_memory[adress_cache].tag == block_num)
+        if(cache_memory[address_cache].tag == block_num)
         {
-            printf("HIT\n");
+            //printf("HIT\n");
             cacheHit++;
         }
         else
         {
-            printf("MISS\n");
+            //printf("MISS\n");
             cacheMiss++;
-            cache_memory[adress_cache].tag = block_num;
+            cache_memory[address_cache].tag = block_num;
 
             for(int i=0; i<block_size; i++)
             {
-                cache_memory[adress_cache].content[i] = memory_list[(first_position)+i].content;
+                cache_memory[address_cache].content[i] = memory_list[(first_position)+i].content;
             }
         }
     }
     else
     {
-        printf("MISS\n");
+        //printf("MISS\n");
         cacheMiss++;
 
-        cache_memory[adress_cache].status = 1;
-        cache_memory[adress_cache].tag = block_num;
-        cache_memory[adress_cache].content = (int*) malloc(block_size * sizeof(int));
+        cache_memory[address_cache].status = 1;
+        cache_memory[address_cache].tag = block_num;
+        cache_memory[address_cache].content = (int*) malloc(block_size * sizeof(int));
 
         for(int i=0; i<block_size; i++)
         {
-            cache_memory[adress_cache].content[i] = memory_list[(first_position)+i].content;
+            cache_memory[address_cache].content[i] = memory_list[(first_position)+i].content;
         }
 
     }
 
-    word = (adress-1) % block_size;
+    word = (address-1) % block_size;
 
-    r[reg_id] = cache_memory[adress_cache].content[word];
+    r[reg_id] = cache_memory[address_cache].content[word];
 
     return 'F';
 }
 
 
-char AssociativityAccess(char reg_id, char adress)
+char AssociativityAccess(char reg_id, char address)
 {
-    int word = (adress - 1) % block_size;
-    block_num = GetBlockNumber(adress);
+    int word = (address - 1) % block_size;
+    block_num = GetBlockNumber(address);
     int wasHit = 0;
     int gotIn = 0;
     int first_position = block_num * block_size;
@@ -138,10 +138,10 @@ char AssociativityAccess(char reg_id, char adress)
     }    
 }
 
-char setAssociativityAccess(char reg_id, char adress, int associativity)
+char setAssociativityAccess(char reg_id, char address, int associativity)
 {
-    int word = (adress - 1) % block_size;
-    block_num = GetBlockNumber(adress);
+    int word = (address - 1) % block_size;
+    block_num = GetBlockNumber(address);
     int wasHit = 0;
     int gotIn = 0;
     cacheset_address = block_num % size_cache;             //Mapeia o endereço da memória principal para um set da cache
@@ -300,7 +300,7 @@ char Decod(const char * current_command)
 char Exec(struct command current_command, int op, int* inst_pointer)
 {
     char *pEnd;
-    int reg_id, reg_id1, reg_id2, value, adress, arg1, arg2, status, inst_adress, first_position, word;
+    int reg_id, reg_id1, reg_id2, value, address, arg1, arg2, status, inst_address, first_position, word;
     //printf("\nInstruction : %s\n", current_command.instruction_part[0]);
 
     switch(op)
@@ -314,42 +314,42 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
         case 2:     //LOAD
             reg_id = current_command.instruction_part[1][1] - 48;               //pega o número depois do r no arquivo de texto e converte para int
-            //int adress = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
+            //int address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
 
             if(current_command.instruction_part[2][0] == 'r')
             {
                 reg_id2 = current_command.instruction_part[2][1] - 48;
-                adress = r[reg_id2];                
+                address = r[reg_id2];                
             }
             else{
-                adress = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
+                address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
                 //r[reg_id] += value;
             }
 
             if(associativity == 0)
             {
-                return DirectAccess(reg_id, adress);
+                return DirectAccess(reg_id, address);
             }
             else if(associativity == 1)
             {
-                return AssociativityAccess(reg_id, adress);
+                return AssociativityAccess(reg_id, address);
             }
             else if(associativity >= 2)
             {
-                return setAssociativityAccess(reg_id, adress, associativity);
+                return setAssociativityAccess(reg_id, address, associativity);
             }
             
         case 3:     //STORE
             reg_id = current_command.instruction_part[1][1] - 48;               //pega o número depois do r no arquivo de texto e converte para int
-            //int adress = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
+            //int address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
 
             if(current_command.instruction_part[2][0] == 'r')
             {
                 reg_id2 = current_command.instruction_part[2][1] - 48;
-                adress = r[reg_id2];                
+                address = r[reg_id2];                
             }
             else{
-                adress = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
+                address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
 
                 //r[reg_id] += value;
             }
@@ -357,29 +357,29 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             if(associativity == 0)
             {
 
-                block_num = GetBlockNumber(adress);             //Recebe o número do bloco
-                adress_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
+                block_num = GetBlockNumber(address);             //Recebe o número do bloco
+                address_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
                 first_position = block_num * block_size;        //Posição do primeiro elemento do bloco na memória principal
 
-                word = (adress - 1) % block_size;
+                word = (address - 1) % block_size;
 
-                cache_memory[adress_cache].status = 1;
-                cache_memory[adress_cache].tag = block_num;
+                cache_memory[address_cache].status = 1;
+                cache_memory[address_cache].tag = block_num;
 
                 for(int i=0; i<block_size; i++)
                 {
-                    cache_memory[adress_cache].content[i] = memory_list[(first_position)+i].content;
+                    cache_memory[address_cache].content[i] = memory_list[(first_position)+i].content;
                 }
 
-                cache_memory[adress_cache].content[word] = r[reg_id];
+                cache_memory[address_cache].content[word] = r[reg_id];
 
-                memory_list[adress-1].content = cache_memory[adress_cache].content[word];
-                memory_list[adress-1].status = 1;
+                memory_list[address-1].content = cache_memory[address_cache].content[word];
+                memory_list[address-1].status = 1;
             }
             else if(associativity == 1)
             {
-                int word = (adress - 1) % block_size;
-                block_num = GetBlockNumber(adress);
+                int word = (address - 1) % block_size;
+                block_num = GetBlockNumber(address);
                 int wasHit = 0;
                 int gotIn = 0;
                 int first_position = block_num * block_size;
@@ -391,8 +391,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                         wasHit = 1;
                         cache_memory[cacheLine].content[word] = r[reg_id];
                         
-                        memory_list[adress-1].content = cache_memory[cacheLine].content[word];
-                        memory_list[adress-1].status = 1;
+                        memory_list[address-1].content = cache_memory[cacheLine].content[word];
+                        memory_list[address-1].status = 1;
                     }
                 }
             
@@ -414,8 +414,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                             gotIn = 1;                                                                      //cache tinha espaço vazio e bloco foi colocado nela
                             cache_memory[cacheLine].content[word] = r[reg_id];   
                             
-                            memory_list[adress-1].content = cache_memory[cacheLine].content[word];
-                            memory_list[adress-1].status = 1;
+                            memory_list[address-1].content = cache_memory[cacheLine].content[word];
+                            memory_list[address-1].status = 1;
                         }
                     }
                 }
@@ -433,14 +433,14 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             
                     cache_memory[victimLine].content[word] = r[reg_id]; 
 
-                    memory_list[adress-1].content = cache_memory[victimLine].content[word];
-                    memory_list[adress-1].status = 1;
+                    memory_list[address-1].content = cache_memory[victimLine].content[word];
+                    memory_list[address-1].status = 1;
                 }
             }
             else if(associativity >= 2)
             {
-                int word = (adress - 1) % block_size;
-                block_num = GetBlockNumber(adress);
+                int word = (address - 1) % block_size;
+                block_num = GetBlockNumber(address);
                 int wasHit = 0;
                 int gotIn = 0;
                 cacheset_address = block_num % size_cache;             //Mapeia o endereço da memória principal para um set da cache
@@ -454,8 +454,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                         wasHit = 1;
                         cacheset_memory[cacheset_address].lines[cacheLine].content[word] = r[reg_id];
                         
-                        memory_list[adress-1].content = cacheset_memory[cacheset_address].lines[cacheLine].content[word];
-                        memory_list[adress-1].status = 1;
+                        memory_list[address-1].content = cacheset_memory[cacheset_address].lines[cacheLine].content[word];
+                        memory_list[address-1].status = 1;
                     }
                 }
             
@@ -477,8 +477,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                             gotIn = 1;                                                                      //cache tinha espaço vazio e bloco foi colocado nela
                             cacheset_memory[cacheset_address].lines[cacheLine].content[word] = r[reg_id];   
                             
-                            memory_list[adress-1].content = cacheset_memory[cacheset_address].lines[cacheLine].content[word];
-                            memory_list[adress-1].status = 1;
+                            memory_list[address-1].content = cacheset_memory[cacheset_address].lines[cacheLine].content[word];
+                            memory_list[address-1].status = 1;
                         }
                     }
                 }
@@ -496,8 +496,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             
                     cacheset_memory[cacheset_address].lines[victimLine].content[word] = r[reg_id]; 
 
-                    memory_list[adress-1].content =  cacheset_memory[cacheset_address].lines[victimLine].content[word];
-                    memory_list[adress-1].status = 1;
+                    memory_list[address-1].content =  cacheset_memory[cacheset_address].lines[victimLine].content[word];
+                    memory_list[address-1].status = 1;
                 }
             }           
 
@@ -606,63 +606,63 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             return 'F';
 
         case 10:
-            inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-            *inst_pointer = inst_adress ;         
+            inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+            *inst_pointer = inst_address ;         
             return 'F';
 
         case 11: 
             if(flag_z == 1)
             {
-                inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-                *inst_pointer = inst_adress ;                    
+                inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+                *inst_pointer = inst_address ;                    
             }
             return 'F';
 
         case 12:
             if(flag_g == 1)
             {
-                inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-                *inst_pointer = inst_adress ;                
+                inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+                *inst_pointer = inst_address ;                
             }
             return 'F';
 
         case 13:
             if(flag_ge == 1)
             {
-                inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-                *inst_pointer = inst_adress ;                
+                inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+                *inst_pointer = inst_address ;                
             }
             return 'F';
 
         case 14:
             if(flag_l == 1)
             {
-                inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-                *inst_pointer = inst_adress ;                
+                inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+                *inst_pointer = inst_address ;                
             }
             return 'F';
 
         case 15:
             if(flag_le == 1)
             {
-                inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-                *inst_pointer = inst_adress ;                
+                inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+                *inst_pointer = inst_address ;                
             }
             return 'F';
 
         case 16:
             if(flag_e == 1)
             {
-                inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-                *inst_pointer = inst_adress ;                
+                inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+                *inst_pointer = inst_address ;                
             }
             return 'F';
 
         case 17:
             if(flag_d == 1)
             {
-                inst_adress = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
-                *inst_pointer = inst_adress ;                
+                inst_address = (int)strtol(current_command.instruction_part[1], &pEnd, 10);
+                *inst_pointer = inst_address ;                
             }
             return 'F';
 
