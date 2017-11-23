@@ -3,10 +3,10 @@ main:	main.o	stages.o
 	./exec
 
 main.o:	main.c
-	gcc -c main.c
+	gcc -std=c99 -Wall -Werror -c main.c
 
 stages.o:	stages.c
-	gcc -c stages.c
+	gcc -std=c99 -Wall -Werror -c stages.c
 
 clean:
 	rm *.o

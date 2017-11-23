@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef CPU_H_
+#define CPU_H_
+
 //struct para instruções
 struct command{
     char instruction_part[3][30];           //cada instrução tem 3 partes(strings de tamanho 10)
@@ -17,7 +20,7 @@ struct memory
 struct cacheLine 
 {
 	char status;
-	char tag;
+	int tag;
 	int  *content;
 };
 
@@ -28,13 +31,10 @@ struct cacheSet
 
 //array de instruções
 struct command instruction_list[100];
-struct memory memory_list[100];
+struct memory memory_list[1000000];
 struct cacheLine *cache_memory;
 struct cacheSet *cacheset_memory;
 
-int size_cache, associativity;
-int cacheHit, cacheMiss;
-int block_size, block_num;
+int size_cache, associativity, block_size;
 
-char Decod(const char *current_command);
-char Exec(struct command current_command, int op, int *inst_pointer);
+#endif //CPU_H_

@@ -1,36 +1,41 @@
 #include "cpu.h"
 
 //registradores globais
-int r[10];
+static int r[10];
 
 //numero de blocos em memória principal
-const int total_blocks = 20;
+const int total_blocks = 200000;
 
 //endereço da memória cache
-char address_cache;
-char cacheset_address;
+int address_cache, cacheset_address;
+
+//numero do bloco
+int block_num;
 
 //flags
-char flag_z,     //zero
-    flag_g,     //greater
-    flag_l,     //lesser
-    flag_ge,    //greater-equals
-    flag_le,    //lesser-equals
-    flag_e,     //equals    
-    flag_d;     //different
+static char flag_z,     //zero
+            flag_g,     //greater
+            flag_l,     //lesser
+            flag_ge,    //greater-equals
+            flag_le,    //lesser-equals
+            flag_e,     //equals    
+            flag_d;     //different
 
-//resto
-int resto;    
+//resto de divisão
+static int resto;    
 
-char GetBlockNumber(char address)        //retorna o numero do bloco que o endereço faz parte
+extern int cacheHit, cacheMiss;
+
+//int getBlockNumber(int address);
+int getBlockNumber(int address)        //retorna o numero do bloco que o endereço faz parte
 {
     return (address-1)/block_size;  
 }
 
-char DirectAccess(char reg_id, char address)
+char directAccess(int reg_id, int address)
 {
     int word;
-    block_num = GetBlockNumber(address);             //Recebe o número do bloco
+    block_num = getBlockNumber(address);             //Recebe o número do bloco
     address_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
     int first_position = block_num * block_size;    //Posição do primeiro elemento do bloco na memória principal
 
@@ -72,15 +77,14 @@ char DirectAccess(char reg_id, char address)
     word = (address-1) % block_size;
 
     r[reg_id] = cache_memory[address_cache].content[word];
-
     return 'F';
 }
 
 
-char AssociativityAccess(char reg_id, char address)
+char associativityAccess(int reg_id, int address)
 {
     int word = (address - 1) % block_size;
-    block_num = GetBlockNumber(address);
+    block_num = getBlockNumber(address);
     int wasHit = 0;
     int gotIn = 0;
     int first_position = block_num * block_size;
@@ -135,13 +139,14 @@ char AssociativityAccess(char reg_id, char address)
         r[reg_id] = cache_memory[victimLine].content[word];
 
         return 'F';
-    }    
+    }
+    return 'I';    
 }
 
-char setAssociativityAccess(char reg_id, char address, int associativity)
+char setAssociativityAccess(int reg_id, int address, int associativity)
 {
     int word = (address - 1) % block_size;
-    block_num = GetBlockNumber(address);
+    block_num = getBlockNumber(address);
     int wasHit = 0;
     int gotIn = 0;
     cacheset_address = block_num % size_cache;             //Mapeia o endereço da memória principal para um set da cache
@@ -197,11 +202,81 @@ char setAssociativityAccess(char reg_id, char address, int associativity)
         r[reg_id] = cacheset_memory[cacheset_address].lines[victimLine].content[word];
 
         return 'F';
-    }   
+    } 
+    return 'I';  
 }
 
-char Decod(const char * current_command)
+char Decod(const char* current_command)
 {
+    /*switch(*current_command){
+        case 'M':
+            current_command++;
+            if(*current_command == 'O'){
+                return 1;
+            } else if(*current_command == 'U'){
+                return 7;
+            } else return 23;
+        case 'L':
+            return 2;
+        case 'S':
+            current_command++;
+            if(*current_command == 'T'){
+                return 3;
+            } else if(*current_command == 'U'){
+                return 6;
+            } else return 23;
+        case 'C':
+            current_command += 2;
+            if(*current_command == 'P'){
+                return 4;
+            } else if(*current_command == 'M'){
+                return 9;
+            } else return 23;
+        case 'A':
+            return 5;
+        case 'D':
+            return 8;
+        case 'J':
+            current_command++;
+            if(*current_command == 'U'){
+                return 10;
+            } else if(*current_command == 'Z'){
+                return 11;
+            } else if(*current_command == 'D'){
+                return 17;
+            } else if(*current_command == 'E'){
+                return 16;
+            } else if(*current_command == 'G'){
+                current_command++;
+                if(*current_command == 'E'){
+                    return 13;
+                } else if(*current_command == '\0'){
+                    return 12;
+                } else return 23;
+            } else if(*current_command == 'L'){
+                current_command++;
+                if(*current_command == 'E'){
+                    return 15;
+                } else if(*current_command == '\0'){
+                    return 14;
+                }
+            } else return 23;
+        case 'G':
+            return 18;
+        case 'E':
+            current_command += 7;
+            if(*current_command == 'L'){
+                return 19;
+            } else if(*current_command == '\0'){
+                return 22;
+            } else return 23;
+        case 'P':
+            return 20;
+        case 'R':
+            return 21;
+        default:
+            return 23;
+    }*/
     if(strcmp(current_command, "MOVE") == 0)                //coloca inteiro no registrador
     {            
         return 1;
@@ -328,11 +403,11 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
             if(associativity == 0)
             {
-                return DirectAccess(reg_id, address);
+                return directAccess(reg_id, address);
             }
             else if(associativity == 1)
             {
-                return AssociativityAccess(reg_id, address);
+                return associativityAccess(reg_id, address);
             }
             else if(associativity >= 2)
             {
@@ -356,8 +431,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
             if(associativity == 0)
             {
-
-                block_num = GetBlockNumber(address);             //Recebe o número do bloco
+                block_num = getBlockNumber(address);             //Recebe o número do bloco
                 address_cache = block_num % size_cache;          //Mapeia o endereço da memória principal para o endereço da cache
                 first_position = block_num * block_size;        //Posição do primeiro elemento do bloco na memória principal
 
@@ -379,7 +453,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             else if(associativity == 1)
             {
                 int word = (address - 1) % block_size;
-                block_num = GetBlockNumber(address);
+                block_num = getBlockNumber(address);
                 int wasHit = 0;
                 int gotIn = 0;
                 int first_position = block_num * block_size;
@@ -440,7 +514,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             else if(associativity >= 2)
             {
                 int word = (address - 1) % block_size;
-                block_num = GetBlockNumber(address);
+                block_num = getBlockNumber(address);
                 int wasHit = 0;
                 int gotIn = 0;
                 cacheset_address = block_num % size_cache;             //Mapeia o endereço da memória principal para um set da cache
@@ -690,7 +764,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             reg_id = current_command.instruction_part[1][1] - 48;
             printf("%d", r[reg_id]);
             return 'F';
-
     }
+
+    return 'I';
 }
 

@@ -1,5 +1,9 @@
 #include "cpu.h"
-const int total_blocks;
+#include "functions.h"
+#define DATA_MEMORY "memory.txt"
+#define INSTRUCT_MEMORY "memory/matriz.txt"
+
+int cacheHit = 0, cacheMiss = 0;
 
 int main(void)
 {
@@ -16,11 +20,11 @@ int main(void)
     char *pEndMemory;
 
     //instruction pointer
-    int inst_pointer = 1, end = 0;
-    char operation, stage='F';
+    int inst_pointer = 1;
+    char operation, stage='F', end = 0;
 
-    cacheHit = 0;
-    cacheMiss = 0;
+    int nInstructions = 0;                      //funciona no loop de leitura das instruções e serve como número total de insts
+    int nData = 0;                              //numero de dados total lidos no arquivo
 
     struct command current_command;    
 
@@ -28,12 +32,12 @@ int main(void)
     scanf("%d", &size_cache);
     cache_memory = (struct cacheLine*) malloc(size_cache * sizeof(struct cacheLine));        //Definição da Cache(Array de blocos de memória cache)
     
-    for(int i = 0; i < size_cache; i++)
+    /*for(int i = 0; i < size_cache; i++)
     {
         cache_memory[i].status = 0;
-    }
+    }*/
 
-    block_size = 100/total_blocks;              //Tamanho do bloco = tamanho da memória principal / número total de blocos
+    block_size = 1000000/total_blocks;              //Tamanho do bloco = tamanho da memória principal / número total de blocos
 
     printf("Nível de Associatividade: ");
     scanf("%d", &associativity);
@@ -48,23 +52,20 @@ int main(void)
         }
         for(int j = 0; j < size_cache; ++j)
         {
-            for(int i = 0; i < associativity; i++)
+            for(int k = 0; k < associativity; k++)
             {
-                cacheset_memory[j].lines[i].status = 0;
+                cacheset_memory[j].lines[k].status = 0;
             }
         }
     }
 
-    fp = fopen("memory/matriz_inversa.txt", "r");
+    fp = fopen(INSTRUCT_MEMORY, "r");
 
-    fpMemory = fopen("memory.txt", "r");
+    fpMemory = fopen(DATA_MEMORY, "r");
     if ((fp == NULL) || (fpMemory == NULL))
     {
         exit(EXIT_FAILURE);
     }
-
-    int nInstructions = 0;                      //funciona no loop de leitura das instruções e serve como número total de insts
-    int nData = 0;
 
     //loop para leitura do arquivo de instruções
     while ((read = getline(&line, &len, fp)) != -1)
@@ -72,8 +73,8 @@ int main(void)
 
         pch = strtok(line, " ");                //necessário para começar a dividir tokens
         //if(strlen(&line) < 3) continue;
-        int i;                                  // 0 a 2
-        for(i = 0; pch != NULL; i++)            //copia as instruções do arquivo pro array de instruções
+
+        for(int i = 0; pch != NULL; i++)            //copia as instruções do arquivo pro array de instruções
         {             
             strcpy(instruction_list[nInstructions].instruction_part[i], pch);
             //printf("%s ", instruction_list[i].instruction_part[i]);
@@ -85,7 +86,6 @@ int main(void)
     //loop para leitura do arquivo de dados
     while ((readMemory = getline(&lineMemory, &lenMemory, fpMemory)) != -1)
     {        
-
         pchMemory = strtok(lineMemory, " ");                //necessário para começar a dividir tokens
         
         if(*pchMemory == '\n')
@@ -97,7 +97,6 @@ int main(void)
 
         memory_list[nData].content = (int)strtol(pchMemory, &pEndMemory, 10);
         memory_list[nData].status = 1;
-        //printf("\nMemória posição %d: %d \n", nData, memory[nData]);
         nData++;
     }
 
@@ -136,7 +135,7 @@ int main(void)
                 break; 
 
             case 'S':           //STORE
-                fpMemory = fopen("memory.txt", "w");
+                fpMemory = fopen(DATA_MEMORY, "w");
                 if (fpMemory == NULL)
                 {
                     exit(EXIT_FAILURE);
@@ -165,9 +164,28 @@ int main(void)
 
     fclose(fp);
     fclose(fpMemory);
-    free(cache_memory);
-    free(line);
-    free(lineMemory);
+
+    if (line)
+    {
+        free(line);
+    }
+    if (lineMemory)
+    {
+        free(lineMemory);
+    }
+    if (cache_memory)
+    {
+        free(cache_memory);
+    }
+    if(cacheset_memory)
+    {
+        free(cacheset_memory);
+    }
+    if(pch)
+    {
+        free(pch);
+    }
+    
     exit(EXIT_SUCCESS);
 
     return 0;
