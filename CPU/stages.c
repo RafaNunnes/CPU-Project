@@ -1,5 +1,9 @@
 #include "cpu.h"
 
+int getBlockNumber(int address);
+
+extern int cacheHit, cacheMiss;
+
 //registradores globais
 static int r[10];
 
@@ -24,10 +28,7 @@ static char flag_z,     //zero
 //resto de divisão
 static int resto;    
 
-extern int cacheHit, cacheMiss;
-
-//int getBlockNumber(int address);
-int getBlockNumber(int address)        //retorna o numero do bloco que o endereço faz parte
+inline int getBlockNumber(int address)        //retorna o numero do bloco que o endereço faz parte
 {
     return (address-1)/block_size;  
 }
@@ -43,12 +44,10 @@ char directAccess(int reg_id, int address)
     {
         if(cache_memory[address_cache].tag == block_num)
         {
-            //printf("HIT\n");
             cacheHit++;
         }
         else
         {
-            //printf("MISS\n");
             cacheMiss++;
             cache_memory[address_cache].tag = block_num;
 
@@ -60,7 +59,6 @@ char directAccess(int reg_id, int address)
     }
     else
     {
-        //printf("MISS\n");
         cacheMiss++;
 
         cache_memory[address_cache].status = 1;
@@ -93,7 +91,6 @@ char associativityAccess(int reg_id, int address)
     {
         if(cache_memory[cacheLine].status == 1 && cache_memory[cacheLine].tag == block_num)    //verifica se está utilizada e o tag bate com o block_num
         {
-            //printf("HIT\n");
             cacheHit++;
             wasHit = 1;
             r[reg_id] = cache_memory[cacheLine].content[word];
@@ -103,7 +100,6 @@ char associativityAccess(int reg_id, int address)
 
     if(!wasHit)                                                                                 //se houve miss
     {
-        //printf("MISS\n");
         cacheMiss++;
         for(int cacheLine = 0; cacheLine < size_cache; ++cacheLine)                           //procura primeira linha vazia
         {
@@ -156,7 +152,6 @@ char setAssociativityAccess(int reg_id, int address, int associativity)
     {
         if(cacheset_memory[cacheset_address].lines[cacheLine].status == 1 && cacheset_memory[cacheset_address].lines[cacheLine].tag == block_num)    //verifica se está utilizada e o tag bate com o block_num
         {
-            //printf("HIT\n");
             cacheHit++;
             wasHit = 1;
             r[reg_id] = cacheset_memory[cacheset_address].lines[cacheLine].content[word];
@@ -166,7 +161,6 @@ char setAssociativityAccess(int reg_id, int address, int associativity)
 
     if(!wasHit)                                                                                 //se houve miss
     {
-        //printf("MISS\n");
         cacheMiss++;
         for(int cacheLine = 0; cacheLine < associativity; ++cacheLine)                           //procura primeira linha vazia
         {
@@ -208,175 +202,129 @@ char setAssociativityAccess(int reg_id, int address, int associativity)
 
 char Decod(const char* current_command)
 {
-    /*switch(*current_command){
+    switch(*current_command)
+    {
         case 'M':
             current_command++;
-            if(*current_command == 'O'){
+            if(*current_command == 'O')
+            {
                 return 1;
-            } else if(*current_command == 'U'){
+            } 
+            else if(*current_command == 'U')
+            {
                 return 7;
-            } else return 23;
+            } 
+            else return 23;
+
         case 'L':
             return 2;
+
         case 'S':
             current_command++;
-            if(*current_command == 'T'){
+            if(*current_command == 'T')
+            {
                 return 3;
-            } else if(*current_command == 'U'){
+            } 
+            else if(*current_command == 'U')
+            {
                 return 6;
-            } else return 23;
+            } 
+            else return 23;
+
         case 'C':
             current_command += 2;
-            if(*current_command == 'P'){
+            if(*current_command == 'P')
+            {
                 return 4;
-            } else if(*current_command == 'M'){
+            } 
+            else if(*current_command == 'M')
+            {
                 return 9;
-            } else return 23;
+            } 
+            else return 23;
+
         case 'A':
             return 5;
+
         case 'D':
             return 8;
+
         case 'J':
             current_command++;
-            if(*current_command == 'U'){
+            if(*current_command == 'U')
+            {
                 return 10;
-            } else if(*current_command == 'Z'){
+            } 
+            else if(*current_command == 'Z')
+            {
                 return 11;
-            } else if(*current_command == 'D'){
+            } 
+            else if(*current_command == 'D')
+            {
                 return 17;
-            } else if(*current_command == 'E'){
+            } 
+            else if(*current_command == 'E')
+            {
                 return 16;
-            } else if(*current_command == 'G'){
+            } 
+            else if(*current_command == 'G')
+            {
                 current_command++;
-                if(*current_command == 'E'){
+                if(*current_command == 'E')
+                {
                     return 13;
-                } else if(*current_command == '\0'){
+                } 
+                else if(*current_command == '\0')
+                {
                     return 12;
-                } else return 23;
-            } else if(*current_command == 'L'){
+                }
+                else return 23;
+            } 
+            else if(*current_command == 'L')
+            {
                 current_command++;
-                if(*current_command == 'E'){
+                if(*current_command == 'E')
+                {
                     return 15;
-                } else if(*current_command == '\0'){
+                } 
+                else if(*current_command == '\0')
+                {
                     return 14;
                 }
-            } else return 23;
+            }
+            else return 23;
+
         case 'G':
             return 18;
+
         case 'E':
             current_command += 7;
-            if(*current_command == 'L'){
+            if(*current_command == 'L')
+            {
                 return 19;
-            } else if(*current_command == '\0'){
+
+            } 
+            else if(*current_command == '\0')
+            {
                 return 22;
-            } else return 23;
+            } 
+            else return 23;
+
         case 'P':
             return 20;
+
         case 'R':
             return 21;
+
         default:
             return 23;
-    }*/
-    if(strcmp(current_command, "MOVE") == 0)                //coloca inteiro no registrador
-    {            
-        return 1;
-    }
-    else if(strcmp(current_command, "LOAD") == 0)           //coloca valor da memória no registrador;
-    {
-        return 2;
-    }
-    else if(strcmp(current_command, "STORE") == 0)          //coloca valor do registrador na memoria;
-    {
-        return 3;
-    }
-    else if(strcmp(current_command, "COPY") == 0)           //copia valor do registrador 2 no registrador 1
-    {
-        return 4;         
-    }
-    else if(strcmp(current_command, "ADD") == 0)
-    {
-        return 5;
-    }
-    else if(strcmp(current_command, "SUB") == 0)
-    {
-        return 6;
-    }
-    else if(strcmp(current_command, "MUL") == 0)
-    {
-        return 7;
-    }
-    else if(strcmp(current_command, "DIV") == 0)
-    {
-        return 8;
-    }
-    else if(strcmp(current_command, "COMP") == 0)
-    {   
-        return 9;
-    }
-    else if(strcmp(current_command, "JUMP") == 0)
-    {            
-        return 10;              
-    }
-    else if(strcmp(current_command, "JZ") == 0)
-    {
-        return 11;
-    }
-    else if(strcmp(current_command, "JG") == 0)
-    {
-        return 12;
-    }
-    else if(strcmp(current_command, "JGE") == 0)
-    {
-        return 13;
-    }
-    else if(strcmp(current_command, "JL") == 0)
-    {
-        return 14;
-    }
-    else if(strcmp(current_command, "JLE") == 0)
-    {
-        return 15;
-    }
-    else if(strcmp(current_command, "JE") == 0)
-    {
-        return 16;
-    }
-    else if(strcmp(current_command, "JD") == 0)
-    {
-        return 17;
-    }
-    else if(strcmp(current_command, "GETINT") == 0)     //recebe valor inteiro do usuário e coloca num reg
-    {
-        return 18;
-    }
-    else if(strcmp(current_command, "ESCREVAL") == 0)   //imprime valor de reg na tela
-    {
-        return 19;
-    }
-    else if(strcmp(current_command, "PRINT") == 0)   //imprime valor de reg na tela
-    {
-        return 20;
-    }
-    else if(strcmp(current_command, "RET") == 0)        //sai do programa
-    {
-        return 21;
-    }
-    else if(strcmp(current_command, "ESCREVA") == 0)   //imprime valor de reg na tela
-    {
-        return 22;
-    }
-    else
-    {
-        return 23;                                                         //Comando vazio
     }
 }
-
 
 char Exec(struct command current_command, int op, int* inst_pointer)
 {
     char *pEnd;
     int reg_id, reg_id1, reg_id2, value, address, arg1, arg2, status, inst_address, first_position, word;
-    //printf("\nInstruction : %s\n", current_command.instruction_part[0]);
 
     switch(op)
     {
@@ -389,16 +337,15 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
         case 2:     //LOAD
             reg_id = current_command.instruction_part[1][1] - 48;               //pega o número depois do r no arquivo de texto e converte para int
-            //int address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
 
             if(current_command.instruction_part[2][0] == 'r')
             {
                 reg_id2 = current_command.instruction_part[2][1] - 48;
                 address = r[reg_id2];                
             }
-            else{
+            else
+            {
                 address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
-                //r[reg_id] += value;
             }
 
             if(associativity == 0)
@@ -416,17 +363,15 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             
         case 3:     //STORE
             reg_id = current_command.instruction_part[1][1] - 48;               //pega o número depois do r no arquivo de texto e converte para int
-            //int address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
-
+            
             if(current_command.instruction_part[2][0] == 'r')
             {
                 reg_id2 = current_command.instruction_part[2][1] - 48;
                 address = r[reg_id2];                
             }
-            else{
+            else
+            {
                 address = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
-
-                //r[reg_id] += value;
             }
 
             if(associativity == 0)
@@ -472,7 +417,7 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             
                 if(!wasHit)                                                                                 //se houve miss
                 {
-                    for(int cacheLine = 0; cacheLine < size_cache; ++cacheLine)                           //procura primeira linha vazia
+                    for(int cacheLine = 0; cacheLine < size_cache; ++cacheLine)                             //procura primeira linha vazia
                     {
                         if(cache_memory[cacheLine].status == 0)                                            //na primeira vazia que encontrar
                         {
@@ -517,8 +462,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                 block_num = getBlockNumber(address);
                 int wasHit = 0;
                 int gotIn = 0;
-                cacheset_address = block_num % size_cache;             //Mapeia o endereço da memória principal para um set da cache
-                int first_position = block_num * block_size;    //Posição do primeiro elemento do bloco na memória principal
+                cacheset_address = block_num % size_cache;              //Mapeia o endereço da memória principal para um set da cache
+                int first_position = block_num * block_size;            //Posição do primeiro elemento do bloco na memória principal
             
             
                 for(int cacheLine = 0; cacheLine < associativity; ++cacheLine)                               //para cada linha de cache
@@ -592,7 +537,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
                 r[reg_id] += r[reg_id2];
             }
-            else{
+            else
+            {
                 value = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
 
                 r[reg_id] += value;
@@ -607,7 +553,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
                 r[reg_id] -= r[reg_id2];
             }
-            else{
+            else
+            {
                 value = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
 
                 r[reg_id] -= value;
@@ -622,7 +569,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
 
                 r[reg_id] *= r[reg_id2];
             }
-            else{
+            else
+            {
                 value = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
 
                 r[reg_id] *= value;
@@ -638,7 +586,8 @@ char Exec(struct command current_command, int op, int* inst_pointer)
                 resto = r[reg_id] % r[reg_id2];
                 r[reg_id] /= r[reg_id2];
             }
-            else{
+            else
+            {
                 value = (int)strtol(current_command.instruction_part[2], &pEnd, 10);
                 
                 resto = r[reg_id] % value;
@@ -751,7 +700,6 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             return 'F';
 
         case 20:
-            //int reg_id = current_command.instruction_part[1][1] - 48;
             printf("%s", current_command.instruction_part[1]);
             return 'F';
 
@@ -765,7 +713,6 @@ char Exec(struct command current_command, int op, int* inst_pointer)
             printf("%d", r[reg_id]);
             return 'F';
     }
-
     return 'I';
 }
 

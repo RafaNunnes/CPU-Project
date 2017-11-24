@@ -29,9 +29,10 @@ struct cacheSet
     struct cacheLine *lines;
 };
 
-//array de instruções
-struct command instruction_list[100];
+//array de memória de dados
 struct memory memory_list[1000000];
+
+//implementação de cache em arrays de struct
 struct cacheLine *cache_memory;
 struct cacheSet *cacheset_memory;
 

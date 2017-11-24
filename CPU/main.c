@@ -3,7 +3,31 @@
 #define DATA_MEMORY "memory.txt"
 #define INSTRUCT_MEMORY "memory/matriz.txt"
 
+extern const int total_blocks;
+
+struct command instruction_list[100];
+
 int cacheHit = 0, cacheMiss = 0;
+
+void freeMemory(int count, ...)
+{
+    va_list args;
+    va_start(args, count);
+    void** ptr;
+
+    for(int i = 0; i < count; i++)
+    {
+        ptr = va_arg(args, void*);
+
+        if(*ptr)
+        {
+            free(*ptr);
+            *ptr = NULL;
+        }
+    }
+    va_end(args);
+}
+
 
 int main(void)
 {
@@ -31,11 +55,7 @@ int main(void)
     printf("Tamanho da cache: ");
     scanf("%d", &size_cache);
     cache_memory = (struct cacheLine*) malloc(size_cache * sizeof(struct cacheLine));        //Definição da Cache(Array de blocos de memória cache)
-    
-    /*for(int i = 0; i < size_cache; i++)
-    {
-        cache_memory[i].status = 0;
-    }*/
+
 
     block_size = 1000000/total_blocks;              //Tamanho do bloco = tamanho da memória principal / número total de blocos
 
@@ -44,7 +64,7 @@ int main(void)
 
     if(associativity >= 2)
     {
-        cacheset_memory = (struct cacheSet*) malloc(size_cache * sizeof(struct cacheSet));              //seta os sets(tamanho da cache)
+        cacheset_memory = (struct cacheSet*) malloc(size_cache * sizeof(struct cacheSet));                   //seta os sets(tamanho da cache)
 
         for(int i = 0; i < size_cache; ++i)
         {
@@ -71,13 +91,11 @@ int main(void)
     while ((read = getline(&line, &len, fp)) != -1)
     {        
 
-        pch = strtok(line, " ");                //necessário para começar a dividir tokens
-        //if(strlen(&line) < 3) continue;
+        pch = strtok(line, " ");                    //necessário para começar a dividir tokens
 
         for(int i = 0; pch != NULL; i++)            //copia as instruções do arquivo pro array de instruções
         {             
             strcpy(instruction_list[nInstructions].instruction_part[i], pch);
-            //printf("%s ", instruction_list[i].instruction_part[i]);
             pch = strtok(NULL, " ");
         }
         nInstructions++;
@@ -118,7 +136,6 @@ int main(void)
                 break;
 
             case 'D':           //DECOD
-                //operation = Decod(current_command);
                 operation = Decod(current_command.instruction_part[0]);
                 if(operation == 23)
                 {
@@ -131,7 +148,6 @@ int main(void)
 
             case 'E':           //EXEC
                 stage = Exec(current_command, operation, &inst_pointer);
-                //stage = 'S';
                 break; 
 
             case 'S':           //STORE
@@ -165,27 +181,8 @@ int main(void)
     fclose(fp);
     fclose(fpMemory);
 
-    if (line)
-    {
-        free(line);
-    }
-    if (lineMemory)
-    {
-        free(lineMemory);
-    }
-    if (cache_memory)
-    {
-        free(cache_memory);
-    }
-    if(cacheset_memory)
-    {
-        free(cacheset_memory);
-    }
-    if(pch)
-    {
-        free(pch);
-    }
-    
+    freeMemory(5, &line, &lineMemory, &cacheset_memory, &pch, &cache_memory);
+
     exit(EXIT_SUCCESS);
 
     return 0;
