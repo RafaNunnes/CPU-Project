@@ -59,7 +59,7 @@ int main(void)
 
     block_size = 1000000/total_blocks;              //Tamanho do bloco = tamanho da memória principal / número total de blocos
 
-    printf("Nível de Associatividade: ");
+    printf("Nível de Associastividade: ");
     scanf("%d", &associativity);
 
     if(associativity >= 2)
